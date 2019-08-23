@@ -1,0 +1,3 @@
+have to insert the script to install dependencies required for the use of readline();
+everything else is mostly done;
+make a readme file giving details of how the code is going to be executes.

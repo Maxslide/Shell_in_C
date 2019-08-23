@@ -83,12 +83,15 @@ char *trim(char *str, const char *seps)
 {
 	return ltrim(rtrim(str, seps), seps);
 }
-int tokenise(char *inp, char *delim, char *flag[])
+int tokenise(char *inp, char *delim, char flag[10][buf])
 {
 	char *token = strtok(inp, delim);
 	int i = 0;
+	//printf("in tokenise");
 	while(token != NULL)
 	{
+		//flag[i] = (char *) malloc(buf * sizeof(char));
+		//printf("after memory allocation");
 		strcpy(flag[i], token);
 		token = strtok(NULL, delim);
 		i++;
@@ -159,7 +162,7 @@ int get_com_inp()
 		}
 		else
 		{
-			printf("%s", tokens);
+			//printf("%s", tokens);
 			pinfo(tokens);
 		}
 	}
@@ -170,7 +173,7 @@ int get_com_inp()
 }
 int echo(char *echpr)
 {
-	char *flag[buf];
+	char flag[10][buf];
 	tokenise(echpr, " ", flag);
 	int i = 0;
 	while(flag[i][0] != '\0')
@@ -223,10 +226,13 @@ int ls(char token[buf], long int tok_len)
 	}
 	else
 	{
-		char *flag[buf];
+		char flag[10][buf];
+		//printf("before tokenise");
 		tokenise(token, " ", flag);
-		for(int i = 0; i< 10; i++)
+		for(int i = 0; i< 10 ; i++)
 		{
+			///
+			//printf("here");
 			if(flag[i][0] == '\0')
 				break;
 			if(flag[i][0] == '-')
@@ -417,6 +423,7 @@ int pinfo(char *pid)
 	char out[buf];
 	snprintf(exe, 50, "/proc/%s/exe", pid);
 	readlink(exe, out, buf);
+	printf("%d", strlen(out));
 	printf("Executable Path : %s\n", out);
 	fclose(statusf);
 }
@@ -426,9 +433,16 @@ int process_terminated(pid_t tpid)
 }
 int sys_com(char *sys_c, char *name)
 {
-	char *argv[buf];
 
-	if(name[0] == '\0')
+	char *argv[buf];
+	int check = 0;
+	//char *abc = "&";
+	//char flag[][]
+	//printf("hey%s",name );
+	char flag[10][buf];
+	tokenise(name, " ", flag);
+	//printf("\nhey%shey",flag[0]);
+	if(flag[0][0] == '\0')
 	{
 		argv[0] = sys_c;
 		argv[1] = NULL;
@@ -436,17 +450,27 @@ int sys_com(char *sys_c, char *name)
 	else
 	{
 		argv[0] = sys_c;
-		argv[1] = name;
-		argv[2] = NULL;
-		
+		if(strcmp(flag[0],"&") == 0)
+		{
+			argv[1] = NULL;
+			check = 1;
+		}
+		else
+		{
+			argv[1] = flag[0];
+				//argv[2] = abc;
+				argv[2] = NULL;
+		}
+
 	}
 	pid_t child_pid, tpid;
 	int child_status;
 	child_pid = fork();
+	//int check = 0;
 	//printf("fork done");
+	//printf("\n");
 	if(child_pid == 0) {
 		/* This is done by the child process. */
-
 		execvp(argv[0], argv);
 
 		/* If execvp returns, it must have failed. */
@@ -457,13 +481,26 @@ int sys_com(char *sys_c, char *name)
 	else {
 		/* This is run by the parent.  Wait for the child
 		   to terminate. */
+		if(strcmp(flag[1], "&") != 0 && check == 0 )
+		{
+			//printf("\n%d\n%d\n", strcmp(flag[1],"&"), check);
+			do{
+				tpid = wait(&child_status);
+				if(tpid != child_pid) process_terminated(tpid);
+			} while(tpid != child_pid);
 
-		do {
-			tpid = wait(&child_status);
-			if(tpid != child_pid) process_terminated(tpid);
-		} while(tpid != child_pid);
-
-		return child_status;
+			return child_status;
+		}
+		else
+		{
+		
+			printf("\n");
+			/*do{
+				if(tpid != child_pid) process_terminated(tpid);
+			} while(tpid != child_pid);
+			*/
+			return child_status;
+		}
 	}
 
 }
