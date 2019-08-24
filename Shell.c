@@ -9,6 +9,7 @@
 #include<pwd.h>
 #include<grp.h>
 #include<time.h>
+#include<error.h>
 #include<readline/readline.h>
 #include <readline/history.h>
 #define buf 1024
@@ -31,6 +32,7 @@ int alphaflag[200];
 //char flag[10][buf];
 char prompt[buf] = "";
 // ------- Function Declaration -----
+void process_terminated(int sig);
 int sys_com(char *sys_c, char *name);
 int get_com_inp();
 int pwd();
@@ -319,7 +321,6 @@ int ls_l(char *fname)
 	printf("%20s ",time);
 	printf("%10s ", fname);
 	printf("\n");
-
 	//printf("%2d", fileStat.st_mode);
 }
 int CWD()
@@ -423,19 +424,26 @@ int pinfo(char *pid)
 	char out[buf];
 	snprintf(exe, 50, "/proc/%s/exe", pid);
 	readlink(exe, out, buf);
-	printf("%d", strlen(out));
+	//printf("%d", strlen(out));
 	printf("Executable Path : %s\n", out);
 	fclose(statusf);
 }
-int process_terminated(pid_t tpid)
+void process_terminated(int sig)
 {
-	printf("process terminated");
+	pid_t pid;
+	int status;
+	pid = waitpid(-1,&status,WNOHANG);
+	if(pid>0)
+	{
+		fprintf(stderr,"Process with Pid %d exited normally.\n",pid);
+	}
 }
 int sys_com(char *sys_c, char *name)
 {
 
 	char *argv[buf];
 	int check = 0;
+	int status;
 	//char *abc = "&";
 	//char flag[][]
 	//printf("hey%s",name );
@@ -458,13 +466,14 @@ int sys_com(char *sys_c, char *name)
 		else
 		{
 			argv[1] = flag[0];
-				//argv[2] = abc;
-				argv[2] = NULL;
+			//argv[2] = abc;
+			argv[2] = NULL;
 		}
 
 	}
 	pid_t child_pid, tpid;
-	int child_status;
+	//int child_status;
+	signal(SIGCHLD,process_terminated);
 	child_pid = fork();
 	//int check = 0;
 	//printf("fork done");
@@ -484,25 +493,18 @@ int sys_com(char *sys_c, char *name)
 		if(strcmp(flag[1], "&") != 0 && check == 0 )
 		{
 			//printf("\n%d\n%d\n", strcmp(flag[1],"&"), check);
-			do{
-				tpid = wait(&child_status);
-				if(tpid != child_pid) process_terminated(tpid);
-			} while(tpid != child_pid);
-
-			return child_status;
+			tpid = waitpid(child_pid,&status,0);
 		}
-		else
-		{
 		
-			printf("\n");
-			/*do{
-				if(tpid != child_pid) process_terminated(tpid);
-			} while(tpid != child_pid);
-			*/
-			return child_status;
-		}
+
 	}
 
+}
+int min(int a,int b)
+{
+	if( a < b)
+		return a;
+	return b;
 }
 int main()
 {	
@@ -514,20 +516,59 @@ int main()
 	strcat(user,"@");
 	strcat(user,host);
 	HOME();
+	FILE *hist_temp, *hist;
+	char line[100];
+	hist = fopen("history.txt", "r+");
+	hist_temp = fopen("historytemp.txt", "w+");
+	int temp;
+	if(hist_temp == NULL)
+	{
+		printf("error in opening the file");
+	}
+	else
+	{
+		while(fgets(line, 100, hist))
+		{
+			//printf("print -> %s\n",line);
+			fprintf(hist_temp, "%s", line);
+		}
+	}
+	fseek(hist_temp,0,0);
+	while(fgets(line, 100, hist_temp))
+	{
+		//printf("print file -> %s",line);
+	}
+	fclose(hist);
 	while(1)
 	{
-		int temp;
+		fseek(hist_temp,0,0);
 		char *inptemp = readline(prompt);
-		for(int i = 0; i<buf; i++)
-			prompt[i] = '\0';
-		//printf("%s \n", inptemp);
 		strcpy(inp, inptemp);
-		//printf("%s\n", inp);
-		//printf("%s", inp);
 		if(inp[0] != '\0')
 		{
 			add_history(inp);
 		}
+		HISTORY_STATE *myhist = history_get_history_state();
+		HIST_ENTRY **mylist = history_list();
+		int fl = 0;
+		hist = fopen("history.txt","w+");
+		while(fl < min(21,myhist->length))
+		{
+			fprintf(hist,"%s\n", mylist[fl]->line);
+			//printf("%s", mylist[fl]->line);
+			fl++;
+		}
+		while(fl < 21 && fgets(line,100,hist_temp))
+		{
+			//printf("here");
+			fprintf(hist,"%s",line);	
+			fl++;
+		}
+		for(int i = 0; i<buf; i++)
+			prompt[i] = '\0';
+		//printf("%s \n", inptemp);
+		//printf("%s\n", inp);
+		//printf("%s", inp);
 		get_com_inp(inp);
 		CWD();
 		free_flag();

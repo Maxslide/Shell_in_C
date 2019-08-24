@@ -1,0 +1,23 @@
+sleep 2s
+sleep 3s
+sleep 3s &
+firefox
+firefox &
+firefox &
+firefox &
+firefox &
+gooogle-chrome 
+gooogle-chrome 
+google-chrome 
+c
+ls
+firefox
+firefox &
+firefox &
+gooogle-chrome 
+gooogle-chrome 
+google-cfifirefox &
+c
+ls
+fox &
+c
