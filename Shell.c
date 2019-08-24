@@ -49,6 +49,7 @@ int free_flag();
 int echo(char *echpr);
 int ls_l(char *fname);
 int pinfo(char *pid);
+int showhis(int n);
 // End Function Declaration
 char *ltrim(char *str, const char *seps)
 {
@@ -506,6 +507,16 @@ int min(int a,int b)
 		return a;
 	return b;
 }
+int add_his(char *inp)
+{	
+	FILE *hist;
+	hist = fopen("history1.txt", "a+");
+	char inpcpy[buf];
+	strcpy(inpcpy,inp);
+	strcat(inpcpy,"\n");
+	fputs(inpcpy,hist);
+	fclose(hist);
+}
 int main()
 {	
 
@@ -516,9 +527,9 @@ int main()
 	strcat(user,"@");
 	strcat(user,host);
 	HOME();
-	FILE *hist_temp, *hist;
+	//FILE *hist_temp, *hist;
 	char line[100];
-	hist = fopen("history.txt", "r+");
+	/*hist = fopen("history.txt", "r+");
 	hist_temp = fopen("historytemp.txt", "w+");
 	int temp;
 	if(hist_temp == NULL)
@@ -538,11 +549,12 @@ int main()
 	{
 		//printf("print file -> %s",line);
 	}
-	fclose(hist);
+	fclose(hist);*/
 	while(1)
 	{
-		fseek(hist_temp,0,0);
+		//fseek(hist_temp,0,0);
 		char *inptemp = readline(prompt);
+		//add_his(inptemp);
 		strcpy(inp, inptemp);
 		if(inp[0] != '\0')
 		{
@@ -551,8 +563,8 @@ int main()
 		HISTORY_STATE *myhist = history_get_history_state();
 		HIST_ENTRY **mylist = history_list();
 		int fl = 0;
-		hist = fopen("history.txt","w+");
-		while(fl < min(21,myhist->length))
+		//hist = fopen("history.txt","w+");
+		/*while(fl < min(21,myhist->length))
 		{
 			fprintf(hist,"%s\n", mylist[fl]->line);
 			//printf("%s", mylist[fl]->line);
@@ -563,7 +575,7 @@ int main()
 			//printf("here");
 			fprintf(hist,"%s",line);	
 			fl++;
-		}
+		}*/
 		for(int i = 0; i<buf; i++)
 			prompt[i] = '\0';
 		//printf("%s \n", inptemp);
