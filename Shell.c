@@ -90,6 +90,13 @@ int tokenise(char *inp, char *delim, char flag[10][buf])
 {
 	char *token = strtok(inp, delim);
 	int i = 0;
+	for(int j = 0; j < 10; j ++)
+	{
+		for(int k = 0; k <buf; k++)
+		{
+			flag[j][k] = '\0';
+		}
+	}
 	//printf("in tokenise");
 	while(token != NULL)
 	{
@@ -108,7 +115,7 @@ int free_flag()
 		alphaflag[i] = 0;
 	}
 }
-int get_com_inp()
+int get_com_inp(char *abc)
 {	
 	char tokens[buf];
 	for(int i = 0; i<buf; i++)
@@ -118,16 +125,16 @@ int get_com_inp()
 	char comd[buf];
 	int i = 0;
 	//printf("%s\n", inp);
-	while(inp[i] != ' ' && inp[i] != '\0')
+	while(abc[i] != ' ' && abc[i] != '\0')
 	{
-		comd[i] = inp[i];
+		comd[i] = abc[i];
 		i++;
 	}
 	comd[i] = '\0';
 	int j = 0;
-	while(inp[i] != '\0')
+	while(abc[i] != '\0')
 	{
-		tokens[j] = inp[i];
+		tokens[j] = abc[i];
 		j++;
 		i++;
 	}
@@ -176,7 +183,7 @@ int get_com_inp()
 }
 int echo(char *echpr)
 {
-	char flag[10][buf];
+	/*char flag[10][buf];
 	tokenise(echpr, " ", flag);
 	int i = 0;
 	while(flag[i][0] != '\0')
@@ -184,7 +191,8 @@ int echo(char *echpr)
 		printf("%s ", flag[i]);
 		i++;
 	}
-	printf("\n");
+	printf("\n");*/
+	printf("%s\n", echpr);
 }
 int clear()
 {
@@ -436,7 +444,7 @@ void process_terminated(int sig)
 	pid = waitpid(-1,&status,WNOHANG);
 	if(pid>0)
 	{
-		fprintf(stderr,"Process with Pid %d exited normally.\n",pid);
+		printf("Process with Pid %d exited normally.\n",pid);
 	}
 }
 int sys_com(char *sys_c, char *name)
@@ -459,7 +467,7 @@ int sys_com(char *sys_c, char *name)
 	else
 	{
 		argv[0] = sys_c;
-		if(strcmp(flag[0],"&") == 0)
+		/*if(strcmp(flag[0],"&") == 0)
 		{
 			argv[1] = NULL;
 			check = 1;
@@ -469,8 +477,14 @@ int sys_com(char *sys_c, char *name)
 			argv[1] = flag[0];
 			//argv[2] = abc;
 			argv[2] = NULL;
+		}*/
+		int i = 0;
+		while(flag[i][0] != 0)
+		{
+			argv[i + 1] = flag[i];
+			i++;
 		}
-
+		argv[i+1] = NULL;
 	}
 	pid_t child_pid, tpid;
 	//int child_status;
@@ -507,7 +521,7 @@ int min(int a,int b)
 		return a;
 	return b;
 }
-int add_his(char *inp)
+/*int add_his(char *inp)
 {	
 	FILE *hist;
 	hist = fopen("history1.txt", "a+");
@@ -516,7 +530,7 @@ int add_his(char *inp)
 	strcat(inpcpy,"\n");
 	fputs(inpcpy,hist);
 	fclose(hist);
-}
+}*/
 int main()
 {	
 
@@ -563,8 +577,8 @@ int main()
 		HISTORY_STATE *myhist = history_get_history_state();
 		HIST_ENTRY **mylist = history_list();
 		int fl = 0;
-		//hist = fopen("history.txt","w+");
-		/*while(fl < min(21,myhist->length))
+		/*hist = fopen("history.txt","w+");
+		while(fl < min(21,myhist->length))
 		{
 			fprintf(hist,"%s\n", mylist[fl]->line);
 			//printf("%s", mylist[fl]->line);
@@ -581,7 +595,17 @@ int main()
 		//printf("%s \n", inptemp);
 		//printf("%s\n", inp);
 		//printf("%s", inp);
-		get_com_inp(inp);
+		char fag[10][buf];
+		char temp[buf];
+		strcpy(temp,inp);
+		int a = tokenise(temp, ";", fag);
+		for(int i = 0; i<a; i++)
+		{
+			//printf("%s", fag[i]);
+			//strcpy(inp, fag[i]);
+			trim(fag[i], " ");			
+			get_com_inp(fag[i]);
+		}			
 		CWD();
 		free_flag();
 	}
