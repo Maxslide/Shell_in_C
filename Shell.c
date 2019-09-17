@@ -51,6 +51,7 @@ int ls_l(char *fname);
 int pinfo(char *pid);
 int showhis(int n);
 int envar();
+int unenvar();
 // End Function Declaration
 char *ltrim(char *str, const char *seps)
 {
@@ -181,9 +182,24 @@ int get_com_inp(char *abc)
 	{
 		envar(tokens);
 	}
+	else if(strcmp(comd, "unsetenv") == 0)
+	{
+		unenvar(tokens);
+	}
 	else
 	{
 		sys_com(comd, tokens);	
+	}
+}
+int unenvar(char *env)
+{
+	if(env[0] == '\0')
+	{
+		printf("error in commmand line arguments");	
+	}
+	else
+	{
+		unsetenv(env);
 	}
 }
 int envar(char *env)
