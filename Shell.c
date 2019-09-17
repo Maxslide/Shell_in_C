@@ -213,6 +213,7 @@ int redirect(char *abc)
 	char red[buf];
 	int i = 0;
 	int j = 0;
+	int status;
 	while(abc[i] != '\0')
 	{
 		if(abc[i] != '<')
@@ -265,6 +266,11 @@ int redirect(char *abc)
 			//printf("Unknown command\n");
 			close(1);
 			exit(0);
+		}
+		else
+		{
+			
+			tpid = waitpid(child_pid,&status,0);
 		}
 	}
 	redirflag = 0;
