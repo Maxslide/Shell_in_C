@@ -50,6 +50,7 @@ int echo(char *echpr);
 int ls_l(char *fname);
 int pinfo(char *pid);
 int showhis(int n);
+int envar();
 // End Function Declaration
 char *ltrim(char *str, const char *seps)
 {
@@ -176,10 +177,51 @@ int get_com_inp(char *abc)
 			pinfo(tokens);
 		}
 	}
+	else if(strcmp(comd, "setenv") == 0)
+	{
+		envar(tokens);
+	}
 	else
 	{
 		sys_com(comd, tokens);	
 	}
+}
+int envar(char *env)
+{
+	char flag[10][buf];
+	int n = tokenise(env, " ", flag);
+	if(n != 1)
+	{
+		printf("error in the command arguments");
+	}
+	else
+	{	
+		char var[buf]; 
+		char val[buf];
+		for(int i = 0; i<buf; i++)
+		{
+			val[i] = '\0';
+		}
+		int i = 0;
+		while(flag[0][i] != '[')
+		{
+			var[i] = flag[0][i];
+			i++;
+		}
+		var[i] = '\0';
+		i++;
+		int j = 0;
+		while(flag[0][i] != ']')
+		{
+			val[j] = flag[0][i];
+			i++;
+			j++;
+		}
+		val[j] = '\0';
+		//printf("%s %s", var, val);
+		setenv(var, val, 1);
+	}
+
 }
 int echo(char *echpr)
 {
