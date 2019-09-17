@@ -616,6 +616,8 @@ int sys_com(char *sys_c, char *name)
 		int i = 0;
 		while(flag[i][0] != 0)
 		{
+			if(strcmp(flag[i],"&") == 0)
+				check = 1;
 			argv[i + 1] = flag[i];
 			i++;
 		}
@@ -630,7 +632,7 @@ int sys_com(char *sys_c, char *name)
 		exit(0);
 	}
 	else {
-		if(strcmp(flag[1], "&") != 0 && check == 0 )
+		if(check == 0 )
 		{
 			tpid = waitpid(child_pid,&status,0);
 		}
