@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include<sys/stat.h>
+#include <fcntl.h>
 #include<dirent.h>
 #include<pwd.h>
 #include<grp.h>
@@ -29,6 +30,7 @@ char user[buf];
 char host[buf];
 char relinp[buf];
 int alphaflag[200];
+int redirflag = 0;
 //char flag[10][buf];
 char prompt[buf] = "";
 // ------- Function Declaration -----
@@ -52,6 +54,7 @@ int pinfo(char *pid);
 int showhis(int n);
 int envar();
 int unenvar();
+int redirect();
 // End Function Declaration
 char *ltrim(char *str, const char *seps)
 {
@@ -118,14 +121,28 @@ int free_flag()
 	}
 }
 int get_com_inp(char *abc)
-{	
+{
+	char abccpy[buf];
+	strcpy(abccpy, abc);
+	int i = 0;
+	while(abccpy[i] != '\0')
+	{
+		if(abccpy[i] == '>' || abccpy[i] == '<')
+		{
+			printf("redirect\n");
+			redirect(abccpy);
+			return 0;
+		}
+		i++;
+	}
+
 	char tokens[buf];
 	for(int i = 0; i<buf; i++)
 	{	
 		tokens[i] = '\0';
 	}
 	char comd[buf];
-	int i = 0;
+	i = 0;
 	//printf("%s\n", inp);
 	while(abc[i] != ' ' && abc[i] != '\0')
 	{
@@ -191,6 +208,67 @@ int get_com_inp(char *abc)
 		sys_com(comd, tokens);	
 	}
 }
+int redirect(char *abc)
+{
+	char red[buf];
+	int i = 0;
+	int j = 0;
+	while(abc[i] != '\0')
+	{
+		if(abc[i] != '<')
+		{
+			red[j++] = abc[i];
+		}
+		i++;
+	}
+	red[j] = '\0';
+	i = 0;
+	int append = 0;
+	while(red[i] != '\0')
+	{
+		if(red[i] == '>')
+			append++;
+		i++;
+	}
+	if(append > 0)
+	{
+		char flag[10][buf];
+		int out;
+		tokenise(red, ">", flag);
+		trim(flag[0], " ");
+		trim(flag[1], " ");
+		char fag[10][buf];
+		char *argv[buf];
+		tokenise(flag[0],  " ", fag);
+		i = 0;
+		while(fag[i][0] != 0)
+		{
+			argv[i] = fag[i];
+			i++;
+		}
+		argv[i] = NULL;
+		pid_t child_pid, tpid;
+		redirflag = 1;
+		child_pid = fork();
+		if(child_pid == 0) {
+		redirflag = 1;
+		if(append == 1)
+			out = open(flag[1],O_WRONLY|O_CREAT,0666); // Should also be symbolic values for access rights
+		else
+			out = open(flag[1],O_WRONLY|O_CREAT|O_APPEND,0666); // Should also be symbolic values for access rights
+		//printf("file created");
+		dup2(out,STDOUT_FILENO);
+		close(out);
+		//printf("here3\n");
+		//signal(SIGCHLD,process_terminated);
+			execvp(argv[0], argv);
+			//printf("Unknown command\n");
+			close(1);
+			exit(0);
+		}
+	}
+	redirflag = 0;
+}
 int unenvar(char *env)
 {
 	if(env[0] == '\0')
@@ -242,14 +320,14 @@ int envar(char *env)
 int echo(char *echpr)
 {
 	/*char flag[10][buf];
-	tokenise(echpr, " ", flag);
-	int i = 0;
-	while(flag[i][0] != '\0')
-	{
-		printf("%s ", flag[i]);
-		i++;
-	}
-	printf("\n");*/
+	  tokenise(echpr, " ", flag);
+	  int i = 0;
+	  while(flag[i][0] != '\0')
+	  {
+	  printf("%s ", flag[i]);
+	  i++;
+	  }
+	  printf("\n");*/
 	printf("%s\n", echpr);
 }
 int clear()
@@ -516,7 +594,6 @@ int sys_com(char *sys_c, char *name)
 	//printf("hey%s",name );
 	char flag[10][buf];
 	tokenise(name, " ", flag);
-	//printf("\nhey%shey",flag[0]);
 	if(flag[0][0] == '\0')
 	{
 		argv[0] = sys_c;
@@ -526,15 +603,15 @@ int sys_com(char *sys_c, char *name)
 	{
 		argv[0] = sys_c;
 		/*if(strcmp(flag[0],"&") == 0)
-		{
-			argv[1] = NULL;
-			check = 1;
-		}
-		else
-		{
-			argv[1] = flag[0];
-			//argv[2] = abc;
-			argv[2] = NULL;
+		  {
+		  argv[1] = NULL;
+		  check = 1;
+		  }
+		  else
+		  {
+		  argv[1] = flag[0];
+		//argv[2] = abc;
+		argv[2] = NULL;
 		}*/
 		int i = 0;
 		while(flag[i][0] != 0)
@@ -545,31 +622,18 @@ int sys_com(char *sys_c, char *name)
 		argv[i+1] = NULL;
 	}
 	pid_t child_pid, tpid;
-	//int child_status;
 	signal(SIGCHLD,process_terminated);
 	child_pid = fork();
-	//int check = 0;
-	//printf("fork done");
-	//printf("\n");
 	if(child_pid == 0) {
-		/* This is done by the child process. */
 		execvp(argv[0], argv);
-
-		/* If execvp returns, it must have failed. */
-
 		printf("Unknown command\n");
 		exit(0);
 	}
 	else {
-		/* This is run by the parent.  Wait for the child
-		   to terminate. */
 		if(strcmp(flag[1], "&") != 0 && check == 0 )
 		{
-			//printf("\n%d\n%d\n", strcmp(flag[1],"&"), check);
 			tpid = waitpid(child_pid,&status,0);
 		}
-		
-
 	}
 
 }
@@ -580,15 +644,15 @@ int min(int a,int b)
 	return b;
 }
 /*int add_his(char *inp)
-{	
-	FILE *hist;
-	hist = fopen("history1.txt", "a+");
-	char inpcpy[buf];
-	strcpy(inpcpy,inp);
-	strcat(inpcpy,"\n");
-	fputs(inpcpy,hist);
-	fclose(hist);
-}*/
+  {	
+  FILE *hist;
+  hist = fopen("history1.txt", "a+");
+  char inpcpy[buf];
+  strcpy(inpcpy,inp);
+  strcat(inpcpy,"\n");
+  fputs(inpcpy,hist);
+  fclose(hist);
+  }*/
 int main()
 {	
 
@@ -602,24 +666,24 @@ int main()
 	//FILE *hist_temp, *hist;
 	char line[100];
 	/*hist = fopen("history.txt", "r+");
-	hist_temp = fopen("historytemp.txt", "w+");
-	int temp;
-	if(hist_temp == NULL)
-	{
-		printf("error in opening the file");
+	  hist_temp = fopen("historytemp.txt", "w+");
+	  int temp;
+	  if(hist_temp == NULL)
+	  {
+	  printf("error in opening the file");
+	  }
+	  else
+	  {
+	  while(fgets(line, 100, hist))
+	  {
+	//printf("print -> %s\n",line);
+	fprintf(hist_temp, "%s", line);
 	}
-	else
-	{
-		while(fgets(line, 100, hist))
-		{
-			//printf("print -> %s\n",line);
-			fprintf(hist_temp, "%s", line);
-		}
 	}
 	fseek(hist_temp,0,0);
 	while(fgets(line, 100, hist_temp))
 	{
-		//printf("print file -> %s",line);
+	//printf("print file -> %s",line);
 	}
 	fclose(hist);*/
 	while(1)
@@ -636,17 +700,17 @@ int main()
 		HIST_ENTRY **mylist = history_list();
 		int fl = 0;
 		/*hist = fopen("history.txt","w+");
-		while(fl < min(21,myhist->length))
-		{
-			fprintf(hist,"%s\n", mylist[fl]->line);
-			//printf("%s", mylist[fl]->line);
-			fl++;
+		  while(fl < min(21,myhist->length))
+		  {
+		  fprintf(hist,"%s\n", mylist[fl]->line);
+		//printf("%s", mylist[fl]->line);
+		fl++;
 		}
 		while(fl < 21 && fgets(line,100,hist_temp))
 		{
-			//printf("here");
-			fprintf(hist,"%s",line);	
-			fl++;
+		//printf("here");
+		fprintf(hist,"%s",line);	
+		fl++;
 		}*/
 		for(int i = 0; i<buf; i++)
 			prompt[i] = '\0';

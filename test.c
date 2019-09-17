@@ -15,13 +15,12 @@
 int main()
 {
 	int in,out;
-	char *argv[] = {"sort", NULL};
-	in = open("makefile", O_RDONLY);
-	dup2(in,STDIN_FILENO);
-	close(in);
+	char *argv[] = {"ls", NULL};
 	out = open("file2",O_WRONLY|O_CREAT|O_APPEND,0666); // Should also be symbolic values for access rights
+	printf("herhe");
 	dup2(out,STDOUT_FILENO);
 	close(out);
+	printf("herhe");
 	execvp(argv[0], argv);
 	close(1);
 		
