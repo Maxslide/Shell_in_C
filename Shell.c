@@ -129,7 +129,6 @@ int get_com_inp(char *abc)
 	{
 		if(abccpy[i] == '>' || abccpy[i] == '<')
 		{
-			printf("redirect\n");
 			redirect(abccpy);
 			return 0;
 		}
@@ -272,6 +271,34 @@ int redirect(char *abc)
 			
 			tpid = waitpid(child_pid,&status,0);
 		}
+	}
+	else
+	{
+		char *argv[buf];
+		char flag[10][buf];
+		int out;
+		strcpy(red,abc);
+		int n = tokenise(red, "<", flag);
+		trim(flag[0], " ");
+		trim(flag[1], " ");
+		for(int i = 0; i<n; i++)
+		{
+			argv[i] = flag[i];
+		}
+		argv[i] = NULL;
+		pid_t child_pid, tpid;
+		child_pid = fork();
+
+		if(child_pid == 0 )
+		{
+			execvp(argv[0], argv );
+			exit(0);
+		}
+		else
+		{
+			tpid = waitpid(child_pid, &status,0);
+		}
+
 	}
 	redirflag = 0;
 }
